@@ -1,0 +1,219 @@
+/**
+  Sketch que controla o acionamento e velocidade de quatro motores brushless
+  utilizando dois dispositivos de rádio.
+
+  Bibliotecas: Servo, RF24, Wire, MPU6050 e I2Cdev.
+  Autor: Erick Marques dos Santos;
+  Updated: 10/08/2019;
+
+*/
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#include <RF24.h> // para uso de radiofrequência
+#include <Servo.h> // para controle dos motores
+
+//#include "I2Cdev.h"// permite comunicar com dispositivos I2C/TWI. A4 (SDA), A5 (SCL)
+//#include "MPU6050.h"// para uso do acelerometro e giroscópio
+//#include "Wire.h"
+//------------------------------------------------------------------'-------------------------------------------------------------------------------------------------
+#define VELOCIDADE_MINIMA 544 // Minimum pulse length in µs: min (opcional): a largura do pulso, em microssegundos, correspondente ao ângulo mínimo (0 graus) no servo (o padrão é 544).
+#define VELOCIDADE_MAXIMA 2400 // Comprimento máximo do pulso em µs: max (opcional): a largura do pulso, em microssegundos, correspondente ao ângulo máximo (180 graus) no servo (o padrão é 2400).
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+char data;
+const float pi = 3.14;
+float ang; //
+int ax, ay, az;
+int gx, gy, gz;
+//const int mpuAddress = 0x68;  //0x68 ou 0x69
+//MPU6050 mpu(mpuAddress);
+Servo motorA, motorB, motorC, motorD;
+
+//GND - GND
+//VCC - VCC
+//SDA - Pin A4
+//SCL - Pin A5
+
+/**
+   ----------------------------------------------------------------------------------------------------------------------------------
+                                                  INICIALIZAÇÃO DO HARDWARE
+   ----------------------------------------------------------------------------------------------------------------------------------
+*/
+void setup() {
+  Serial.begin(115200);
+
+  motorA.attach(4, VELOCIDADE_MINIMA, VELOCIDADE_MAXIMA); //PRETO
+  motorB.attach(5, VELOCIDADE_MINIMA, VELOCIDADE_MAXIMA); //MARROM
+  motorC.attach(6, VELOCIDADE_MINIMA, VELOCIDADE_MAXIMA); //VERDE
+  motorD.attach(7, VELOCIDADE_MINIMA, VELOCIDADE_MAXIMA); //AMARELO
+
+  /* Wire.begin();
+    mpu.initialize();
+    if (mpu.testConnection()) {
+     Serial.println ("IMU conectado");
+    } else {
+     Serial.println("Erro no sensor");
+    }
+  **/
+  mostraInstrucoes();
+
+  Serial.println("#     #    #    #     # #######          #####  ####### #     # ####### ######  ####### #"); delay(85);
+  Serial.println("#     #   # #   ##    #    #            #     # #     # ##    #    #    #     # #     # #"); delay(85);
+  Serial.println("#     #  #   #  # #   #    #            #       #     # # #   #    #    #     # #     # #"); delay(85);
+  Serial.println("#     # #     # #  #  #    #            #       #     # #  #  #    #    ######  #     # #"); delay(85);
+  Serial.println(" #   #  ####### #   # #    #            #       #     # #   # #    #    #   #   #     # #"); delay(85);
+  Serial.println("  # #   #     # #    ##    #            #     # #     # #    ##    #    #    #  #     # #"); delay(85);
+  Serial.println("   #    #     # #     #    #             #####  ####### #     #    #    #     # ####### #######"); delay(85);
+  Serial.println("                                #######                                                         "); delay(85);
+  Serial.println("\n\n             ATENÇÃO: NÃO LIGUE O VANT COM AS HELICES MONTADAS NOS MOTORES!\n\n");
+  delay(500);
+}
+
+void loop() {
+  if (Serial.available()) {
+    data = Serial.read();
+    /*
+      writeMicroseconds()
+      Escreve um valor em microssegundos (uS) para o servo, controlando o eixo de acordo. Em um servo padrão,
+      isso definirá o ângulo do eixo. Em servos padrão, um valor de parâmetro de 1000 é totalmente no sentido anti-horário,
+      2000 é totalmente no sentido horário e 1500 no meio.
+      Note que alguns fabricantes não seguem este padrão muito de perto, de modo que os servos freqüentemente respondem
+      a valores entre 700 e 12300. Sinta-se livre para aumentar esses pontos até que o servo não continue a aumentar seu
+      alcance. Observe, no entanto, que a tentativa de conduzir um servo além de seus pontos de extremidade (geralmente
+      indicados por um som de rosnado) é um estado de alta corrente e deve ser evitado.
+      Os servos de rotação contínua responderão à função writeMicrosecond de maneira análoga à função de gravação.
+      Syntax
+
+      servo.writeMicroseconds(uS)
+      servo: a variable of type Servo
+      uS: the value of the parameter in microseconds (int)
+    **/
+    switch (data) {
+      // 0
+      case 48 : Serial.println("Enviando velocidade zero");
+        motorA.writeMicroseconds(VELOCIDADE_MINIMA);
+        motorB.writeMicroseconds(VELOCIDADE_MINIMA);
+        motorC.writeMicroseconds(VELOCIDADE_MINIMA);
+        motorD.writeMicroseconds(VELOCIDADE_MINIMA);
+        break;
+
+      // 1
+      case 49 : Serial.println("Enviando velocidade máxima");
+        motorA.writeMicroseconds(VELOCIDADE_MAXIMA);
+        motorB.writeMicroseconds(VELOCIDADE_MAXIMA);
+        motorC.writeMicroseconds(VELOCIDADE_MAXIMA);
+        motorD.writeMicroseconds(VELOCIDADE_MAXIMA);
+        break;
+
+      // 2
+      case 50 : Serial.print("Rodando teste de velocidade progressiva em 3");
+        delay(1000);
+        Serial.print(" 2");
+        delay(1000);
+        Serial.println(" 1...");
+        delay(1000);
+        test();
+        break;
+      //3
+      case 51 : Serial.println("Enviando velocidade por radiofrequência");
+        motorA.writeMicroseconds(VELOCIDADE_MINIMA + 60);
+        motorB.writeMicroseconds(VELOCIDADE_MINIMA + 60);
+        motorC.writeMicroseconds(VELOCIDADE_MINIMA + 60);
+        motorD.writeMicroseconds(VELOCIDADE_MINIMA + 60);
+        break;
+    }
+  }
+
+  // Recebe acelerações e velocidades angulares do Sensor MPU6050.
+//  mpu.getAcceleration(&ax, &ay, &az);
+//  mpu.getRotation(&gx, &gy, &gz);
+//  mostraAcelGiro(); // mostra acelerações e velocidades angulares no Monitor Serial
+//  delay(100);
+
+  //desenvolver um gatilho para a função entrar em ação. por exemplo: só aciona após chegar a determida altura ou botão acionado.
+  controleMotor();
+}
+
+/**
+   -----------------------------------------------------------------
+   TESTE: ENVIA VELOCIDADE DE 0 AO MÁXIMO PARA CADA MOTOR.
+   -----------------------------------------------------------------
+*/
+void test()
+{
+  for (int i = VELOCIDADE_MINIMA; i <= VELOCIDADE_MAXIMA; i += 1) {
+    Serial.print("Pulse length = ");
+    Serial.println(i);
+    motorA.writeMicroseconds(i);
+    motorB.writeMicroseconds(i);
+    motorC.writeMicroseconds(i);
+    motorD.writeMicroseconds(i);
+    delay(100);
+  }
+
+  Serial.println("STOP");
+  motorA.writeMicroseconds(VELOCIDADE_MINIMA);
+  motorB.writeMicroseconds(VELOCIDADE_MINIMA);
+  motorC.writeMicroseconds(VELOCIDADE_MINIMA);
+  motorD.writeMicroseconds(VELOCIDADE_MINIMA);
+}
+/*-----------------------------------------------------------------
+  MOSTRA INSTRUÇÕES AO USUÁRIO
+  -----------------------------------------------------------------
+**/
+void mostraInstrucoes()
+{
+  Serial.println("                          <<INSTRUÇÕES DE FUNCIONAMENTO>>\n  ");
+  Serial.println("1º) Com a bateria desconectada do aparelho, digite a tecla 1 ");
+  Serial.println("para  iniciar a sequência de configuração dos ESCs.");
+  Serial.println("2º) Conecte a bateria ao VANT e aguarde a sequência de bips dos motores finalizar.\n");
+  Serial.println("\t\bDigite: 0 - Enviando Velocidade Mínima");
+  Serial.println("\t\bDigite: 1 - Cuidado! Enviando VelocidadeMáxima!");
+  Serial.println("\t\bDigite: 2 - Cuidado! Iniciando Teste de Velocidade Progressiva");
+  Serial.println("\t\bDigite: 3 - Enviando Velocidade por Rádio\n");
+}
+
+void controleMotor() {
+  //  A     B
+  //  >>   <<
+  //  D     C
+  // <<     >>
+  while (0 < ang < pi / 2) { // Destino a Frente e Direita: virar a Direita
+    motorA.writeMicroseconds(1230);
+    motorB.writeMicroseconds(1260); //
+    motorC.writeMicroseconds(1230);
+    motorD.writeMicroseconds(1260); //
+  }
+  while (pi / 2 < ang < pi) { // Destino a Para Tras e Direita: virar a Direita
+    motorA.writeMicroseconds(1230);
+    motorB.writeMicroseconds(1260); //
+    motorC.writeMicroseconds(1230);
+    motorD.writeMicroseconds(1260); //
+  }
+  while (pi < ang < 3 * pi / 2) { // Destino a Para Tras e Esquerda: virar a Esquerda
+    motorA.writeMicroseconds(1260);//
+    motorB.writeMicroseconds(1230);
+    motorC.writeMicroseconds(1260);//
+    motorD.writeMicroseconds(1230);
+  }
+  while (3 * pi / 2 < ang < 2 * pi) { // Destino a Frente e Esquerda: virar a Esquerda
+    motorA.writeMicroseconds(1260);//
+    motorB.writeMicroseconds(1230);
+    motorC.writeMicroseconds(1260);//
+    motorD.writeMicroseconds(1230);
+  }
+}
+
+void printTab()
+{
+  Serial.print(F("\t"));
+}
+
+void mostraAcelGiro()
+{
+  Serial.print(F("a[x y z] g[x y z]:t"));
+  Serial.print(ax); printTab();
+  Serial.print(ay); printTab();
+  Serial.print(az); printTab();
+  Serial.print(gx); printTab();
+  Serial.print(gy); printTab();
+  Serial.println(gz);
+}
