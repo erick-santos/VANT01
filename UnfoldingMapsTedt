@@ -1,60 +1,71 @@
 import de.fhpotsdam.unfolding.UnfoldingMap;
+import de.fhpotsdam.unfolding.events.EventDispatcher;
 import de.fhpotsdam.unfolding.geo.Location;
+import de.fhpotsdam.unfolding.marker.SimpleLinesMarker;
 import de.fhpotsdam.unfolding.marker.SimplePointMarker;
-import de.fhpotsdam.unfolding.providers.Microsoft;
+import de.fhpotsdam.unfolding.providers.OpenStreetMap;
 import de.fhpotsdam.unfolding.utils.MapUtils;
 import processing.core.PApplet;
 
 public class SimpleMapApp extends PApplet {
-	 
-    UnfoldingMap map;
-   
- 
-    public void setup() {
-        size(800, 600);
-        map = new UnfoldingMap(this, new Microsoft.HybridProvider());
-        
-        // Add mouse and keyboard interactions
-        MapUtils.createDefaultEventDispatcher(this, map);
-        
-        //For simple animations between different zoom levels simply switch on map tweening.
-        map.setTweening(true);
-                
-        
-        Location fatecZLocation = new Location(-23.521092, -46.475685);
-        Location fatecSpLocation = new Location(-23.529813f, -46.632171f);
-        
-        // Displaying markers on a map is very straight-forward. Just create a marker with a location and add it to the map once.
-             
-        // Create point markers for locations
-        SimplePointMarker fatecSpMarker = new SimplePointMarker(fatecSpLocation);
-        SimplePointMarker fatecZLMarker = new SimplePointMarker(fatecZLocation);
-        
-        // Adapt style fatecSpMarker
-        fatecSpMarker.setColor(color(255, 0, 0, 100));
-        fatecSpMarker.setStrokeColor(color(255, 0, 0));
-        fatecSpMarker.setStrokeWeight(10);
-        
-        // Adapt style fatecZLMarke
-        fatecZLMarker.setColor(color(255, 0, 0, 100));
-        fatecZLMarker.setStrokeColor(color(255, 0, 0));
-        fatecZLMarker.setStrokeWeight(10);         
-                    
-        // Add markers to the map
-        map.addMarkers(fatecZLMarker, fatecSpMarker);
-             
-         
-       
-    }
- 
-    public void draw() {
-        map.draw();
-                
-        // mostrar coordenadas      
-        Location location = map.getLocation(mouseX, mouseY);
-        fill(255,0,0);
-        text(location.getLat() + ", " + location.getLon(), mouseX, mouseY);
-        
-             
-    }
- }
+
+	Location clickDestination;
+	UnfoldingMap map;
+	Location fatecZLocation = new Location(-23.521092, -46.475685);
+	Location fatecSpLocation = new Location(-23.529813f, -46.632171f);
+
+	public void setup() {
+		size(800, 600, P2D);
+		map = new UnfoldingMap(this, new OpenStreetMap.OpenStreetMapProvider());
+
+		// Add mouse and keyboard interactions
+		MapUtils.createDefaultEventDispatcher(this, map);
+
+		// For simple animations between different zoom levels simply switch on map
+		// tweening.
+		map.setTweening(true);
+
+		Location fatecZLocation = new Location(-23.521092, -46.475685);
+		Location fatecSpLocation = new Location(-23.529813f, -46.632171f);
+
+		// Displaying markers on a map is very straight-forward. Just create a marker
+		// with a location and add it to the map once.
+
+		// Create point markers for locations
+		SimplePointMarker fatecSpMarker = new SimplePointMarker(fatecSpLocation);
+		SimplePointMarker fatecZLMarker = new SimplePointMarker(fatecZLocation);
+
+		// Adapt style fatecSpMarker
+		fatecSpMarker.setColor(color(255, 0, 0, 100));
+		fatecSpMarker.setStrokeColor(color(255, 0, 0));
+		fatecSpMarker.setStrokeWeight(10);
+
+		// Adapt style fatecZLMarke
+		fatecZLMarker.setColor(color(255, 0, 0, 100));
+		fatecZLMarker.setStrokeColor(color(255, 0, 0));
+		fatecZLMarker.setStrokeWeight(10);
+
+		// Add markers to the map
+		map.addMarkers(fatecZLMarker, fatecSpMarker);
+
+	}
+
+	public void draw() {
+		map.draw();
+
+		// mostra coordenadas do mouse
+		Location location = map.getLocation(mouseX, mouseY);
+		fill(255, 0, 0);
+		text(location.getLat() + ", " + location.getLon(), mouseX, mouseY);
+	}
+
+	// guarda a posição de uma coordenada a cada clique
+	//E informa a distancia do ponto a FatecZl
+	public void mousePressed() {
+		clickDestination = map.getLocation(mouseX, mouseY);
+		println(clickDestination);
+		double distance = fatecZLocation.getDistance(clickDestination);
+		println(distance);
+	}
+
+}
