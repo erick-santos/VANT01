@@ -1,0 +1,6 @@
+PImage compassImg = loadImage("NomeDaImagem.png");
+
+CompassUI compass;	//void Setup(){}
+compass = new CompassUI(this, UnfoldingMap map, processing.core.PImage img, float x, float y);
+
+compass.draw();	// void draw(){}
