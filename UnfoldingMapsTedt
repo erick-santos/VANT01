@@ -1,60 +1,97 @@
 import de.fhpotsdam.unfolding.UnfoldingMap;
+import de.fhpotsdam.unfolding.events.EventDispatcher;
 import de.fhpotsdam.unfolding.geo.Location;
+import de.fhpotsdam.unfolding.marker.SimpleLinesMarker;
 import de.fhpotsdam.unfolding.marker.SimplePointMarker;
-import de.fhpotsdam.unfolding.providers.Microsoft;
+import de.fhpotsdam.unfolding.providers.OpenStreetMap;
 import de.fhpotsdam.unfolding.utils.MapUtils;
 import processing.core.PApplet;
+import processing.serial.*;
 
 public class SimpleMapApp extends PApplet {
-	 
-    UnfoldingMap map;
-   
- 
-    public void setup() {
-        size(800, 600);
-        map = new UnfoldingMap(this, new Microsoft.HybridProvider());
-        
-        // Add mouse and keyboard interactions
-        MapUtils.createDefaultEventDispatcher(this, map);
-        
-        //For simple animations between different zoom levels simply switch on map tweening.
-        map.setTweening(true);
-                
-        
-        Location fatecZLocation = new Location(-23.521092, -46.475685);
-        Location fatecSpLocation = new Location(-23.529813f, -46.632171f);
-        
-        // Displaying markers on a map is very straight-forward. Just create a marker with a location and add it to the map once.
-             
-        // Create point markers for locations
-        SimplePointMarker fatecSpMarker = new SimplePointMarker(fatecSpLocation);
-        SimplePointMarker fatecZLMarker = new SimplePointMarker(fatecZLocation);
-        
-        // Adapt style fatecSpMarker
-        fatecSpMarker.setColor(color(255, 0, 0, 100));
-        fatecSpMarker.setStrokeColor(color(255, 0, 0));
-        fatecSpMarker.setStrokeWeight(10);
-        
-        // Adapt style fatecZLMarke
-        fatecZLMarker.setColor(color(255, 0, 0, 100));
-        fatecZLMarker.setStrokeColor(color(255, 0, 0));
-        fatecZLMarker.setStrokeWeight(10);         
-                    
-        // Add markers to the map
-        map.addMarkers(fatecZLMarker, fatecSpMarker);
-             
-         
-       
-    }
- 
-    public void draw() {
-        map.draw();
-                
-        // mostrar coordenadas      
-        Location location = map.getLocation(mouseX, mouseY);
-        fill(255,0,0);
-        text(location.getLat() + ", " + location.getLon(), mouseX, mouseY);
-        
-             
-    }
- }
+	UnfoldingMap map;
+	Serial myPort; 	//	serial port
+	Location clickedDestination;
+	Location uavPosition;
+	Location fatecZLocation = new Location(-23.521092, -46.475685);
+	Location fatecSpLocation = new Location(-23.529813f, -46.632171f);
+
+	public void setup() {
+		size(800, 600, P2D);
+		map = new UnfoldingMap(this, new OpenStreetMap.OpenStreetMapProvider());
+		
+		//	Create a pan to the first UAV location:
+		map.panTo(uavPosition);
+		
+		//	Receive the UAV location thru serial port:
+		uavPosition = myPort.read();
+				
+		//	Add mouse and keyboard interactions
+		MapUtils.createDefaultEventDispatcher(this, map);
+
+		//	For simple animations between different zoom levels simply switch on map
+		//	tweening.
+		map.setTweening(true);
+		
+		//	List all the available serial ports:
+		printArray(Serial.list());
+
+		//	Open the port with baud rate serial 9600:
+		myPort = new Serial(this, Serial.list()[0], 9600);
+		Location fatecZLocation = new Location(-23.521092, -46.475685);
+		Location fatecSpLocation = new Location(-23.529813f, -46.632171f);
+		
+		Location uavLocation = new Location(uavPosition);
+		Location clickedLocation = new Location(clickedDestination);
+		//	Displaying markers on a map is very straight-forward. Just create a marker
+		//	with a location and add it to the map once.
+
+		//	Create point markers for locations
+		SimplePointMarker fatecSpMarker = new SimplePointMarker(fatecSpLocation);
+		SimplePointMarker fatecZLMarker = new SimplePointMarker(fatecZLocation);
+		SimplePointMarker uavMarker = new SimplePointMarker(uavLocation);
+		SimplePointMarker clickedMaker  = new SimplePointMarker(clickedLocation);
+		//	Add markers to the map
+		map.addMarkers(uavMarker, fatecZLMarker, fatecSpMarker, clickedMaker);
+
+		//	Adapt style uavMarker
+		uavMarker.setColor(color(255, 0, 0, 100)); 		// red
+		uavMarker.setStrokeColor(color(0, 0, 0)); 		//black
+		uavMarker.setStrokeWeight(10);
+				
+		//	Adapt style uavMarker
+		uavMarker.setColor(color(0, 0, 0, 100)); 		//black
+		uavMarker.setStrokeColor(color(255, 0, 0)); 	// red
+		uavMarker.setStrokeWeight(10);
+		
+		//	Adapt style fatecSpMarker
+		fatecSpMarker.setColor(color(255, 0, 0, 100));	// red
+		fatecSpMarker.setStrokeColor(color(255, 0, 0));	// red
+		fatecSpMarker.setStrokeWeight(10);
+
+		//	Adapt style fatecZLMarke
+		fatecZLMarker.setColor(color(255, 0, 0, 100));	// red
+		fatecZLMarker.setStrokeColor(color(255, 0, 0));	// red
+		fatecZLMarker.setStrokeWeight(10);
+		
+			}
+
+	public void draw() {
+		map.draw();
+		//	Show mouse coordinates
+		Location location = map.getLocation(mouseX, mouseY);
+		fill(255, 0, 0);
+		text(location.getLat() + ", " + location.getLon(), mouseX, mouseY);
+		//	Report the distance from the point to the UAV position
+		double distance = uavPosition.getDistance(clickedDestination);
+		println(distance);
+	}
+	
+		//	Saves the position of a coordinate with each click.
+	public void mousePressed() {
+		clickedDestination = map.getLocation(mouseX, mouseY);
+		println(clickedDestination);
+		//	Send a Location to Arduino sketch on VANT thru serial port:
+		myPort.write(clickedDestination);
+	}
+}
