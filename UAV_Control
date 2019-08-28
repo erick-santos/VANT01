@@ -1,0 +1,67 @@
+PImage mapa;
+PImage bateria;
+PImage bussula;
+PImage parabaixo;
+PImage joystick;
+PFont minhaFonte;
+
+void setup() { 
+  size(1280, 725);
+  background(150);
+  mapa = loadImage("GoogleMapsFatecZl.JPG");
+  bateria = loadImage("ICONE_BATERIA.JPG");
+  bussula = loadImage("ICONE_BUSSULA.JPG");
+  parabaixo = loadImage("ICONE_PARABAIXO.JPG");
+  joystick = loadImage("ICONE_JOYSTICK.JPG");
+  minhaFonte = loadFont("Arial-BoldMT-48.vlw");
+}
+void draw() {
+  textFont(minhaFonte); // fonte
+  fill(255);
+  rect(502, 40, 356, 725);//tela do celular 356, 725
+  fill(69, 129, 142);
+  rect(521, 139, 320, 44);//menu
+  fill(159, 197, 248);
+  rect(521, 451, 114, 23);//barra de telemetria1
+  rect(635, 451, 202, 23);//barra de telemetria2
+  rect(588, 484, 155, 25);//digite a latitude 
+  rect(588, 514, 155, 25);//digite a longitude
+  fill(43, 120, 228);
+  rect(750, 484, 72, 56);//iniciar
+  fill(69, 129, 142);
+  rect(527, 550, 306, 49);//retornar a base
+  fill(43, 120, 228);
+  rect(527, 607, 306, 49);//controle manual
+
+  //TEXTO
+    fill(255);
+  
+  textSize(20);
+  text("VANT CONTRL", 610, 168);
+  fill(0);
+  textSize(16);
+  text("GPS:    ", 534, 202);
+  text("Rádio:    ", 647, 202);
+  text("Bateria", 753, 202);
+  textSize(14);
+  text("Altura:    metros", 523, 470);
+  text("Lat, Long:                    ", 637, 470);
+  text("Digite a latitude", 591, 503);
+  text("Digite a longitude", 591, 533);
+  fill(255);
+  text("Iniciar", 765, 518);
+  text("Retornar a base", 625, 580);
+  text("Controle manual", 625, 637);
+  textSize(8);
+  fill(0);
+  text("Criado por Erick Marques dos Santos", 610, 674);
+
+  //ICONES
+  image(bateria, 806, 190, 20, 16);
+  image(bussula, 534, 490, 48, 48);
+  image(parabaixo, 534, 552, 48, 48);
+  image(joystick, 534, 607, 52, 48);
+
+  //MAPA
+  image(mapa, 521, 209, 316, 244);
+}
